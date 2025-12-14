@@ -11,7 +11,7 @@ from __future__ import annotations
 class APIPaths:
     """Root API paths configuration."""
 
-    PREFIX_V1 = "/api/v1"
+    PREFIX_V1 = "/v1"
 
     class Auth:
         """Authentication endpoints."""

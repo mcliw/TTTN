@@ -31,22 +31,13 @@ def create_app(lifespan=None) -> FastAPI:
     # Create a main router that will hold all API versions, prefixed with /api
     api_router = APIRouter(prefix="/api")
 
-    # Register routers dynamically from app.api package
+    # Register the v1 API router
     try:
-        import app.api as api_pkg
-        for finder, name, ispkg in pkgutil.iter_modules(api_pkg.__path__):
-            module_name = f"app.api.{name}"
-            try:
-                mod = import_module(module_name)
-                router = getattr(mod, "router", None)
-                if router is not None:
-                    # Include each version's router into the main api_router
-                    api_router.include_router(router)
-                    logger.debug("Included router from %s", module_name)
-            except Exception:
-                logger.exception("Failed to include router %s", module_name)
+        from app.api import v1
+        api_router.include_router(v1.router)
+        logger.info("Successfully included v1 API router.")
     except Exception:
-        logger.exception("Failed to scan app.api package for routers")
+        logger.exception("Failed to include the v1 API router.")
 
     app.include_router(api_router)
 

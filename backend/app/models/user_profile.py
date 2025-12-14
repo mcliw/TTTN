@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship, foreign
 
 from .base import Base
 
@@ -12,7 +12,7 @@ class UserProfile(Base):
     __tablename__ = "user_profile"
 
     profile_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
+    user_id = Column(Integer, ForeignKey("user_account.user_id"), index=True)
     department_id = Column(Integer, index=True)
     full_name = Column(String(255))
     phone = Column(String(50))
@@ -23,7 +23,6 @@ class UserProfile(Base):
 
     user = relationship(
         "UserAccount",
-        primaryjoin="UserProfile.user_id==UserAccount.user_id",
         back_populates="profile",
         lazy="selectin",
         uselist=False,

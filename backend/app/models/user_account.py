@@ -24,38 +24,32 @@ class UserAccount(Base):
 
     oauth_identities = relationship(
         "UserOAuthIdentity",
-        primaryjoin="UserAccount.user_id==UserOAuthIdentity.user_id",
         back_populates="user",
         lazy="selectin",
     )
     profile = relationship(
         "UserProfile",
-        primaryjoin="UserAccount.user_id==UserProfile.user_id",
         back_populates="user",
         uselist=False,
         lazy="selectin",
     )
     sessions = relationship(
         "ChatSession",
-        primaryjoin="UserAccount.user_id==ChatSession.user_id",
         back_populates="user",
         lazy="selectin",
     )
     feedbacks = relationship(
         "SystemFeedback",
-        primaryjoin="UserAccount.user_id==SystemFeedback.user_id",
         back_populates="user",
         lazy="selectin",
     )
     notifications = relationship(
         "SystemNotification",
-        primaryjoin="UserAccount.user_id==SystemNotification.receiver_id",
         back_populates="receiver",
         lazy="selectin",
     )
     workflows = relationship(
         "WorkflowConfig",
-        primaryjoin="UserAccount.user_id==WorkflowConfig.created_by",
         back_populates="creator",
         lazy="selectin",
     )

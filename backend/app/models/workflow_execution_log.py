@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -13,8 +13,8 @@ class WorkflowExecutionLog(Base):
     __tablename__ = "workflow_execution_log"
 
     exec_id = Column(Integer, primary_key=True, index=True)
-    workflow_id = Column(Integer, index=True)
-    user_id = Column(Integer, index=True)
+    workflow_id = Column(Integer, ForeignKey("workflow_config.workflow_id"), index=True)
+    user_id = Column(Integer, ForeignKey("user_account.user_id"), index=True)
     input_data = Column(JSONB)
     output_data = Column(JSONB)
     status = Column(String(50))

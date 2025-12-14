@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -13,8 +13,8 @@ class ChatMessage(Base):
     __tablename__ = "chat_message"
 
     message_id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, index=True)
-    intent_id = Column(Integer, index=True)
+    session_id = Column(Integer, ForeignKey("chat_session.session_id"), index=True)
+    intent_id = Column(Integer, ForeignKey("chat_intent.intent_id"), index=True)
     sender_type = Column(String(50))
     content = Column(Text)
     entity_detected = Column(JSONB)

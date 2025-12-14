@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -29,11 +29,28 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.put(APIPaths.Auth.PROFILE_BY_ID)
-def update_profile(user_id: int, full_name: str | None = Form(None), bio: str | None = Form(None), avatar: UploadFile | None = File(None), db: Session = Depends(get_db)):
-    payload = ProfileUpdateRequest(full_name=full_name, bio=bio)
+async def update_profile(request: Request, user_id: int, db: Session = Depends(get_db)):
+    # Support form data (multipart) when python-multipart is installed, otherwise accept JSON body
+    full_name = None
+    bio = None
     avatar_stream = None
     avatar_name = None
-    if avatar is not None:
-        avatar_stream = avatar.file
-        avatar_name = avatar.filename
+    try:
+        form = await request.form()
+        full_name = form.get("full_name")
+        bio = form.get("bio")
+        avatar = form.get("avatar")
+        if avatar is not None and hasattr(avatar, "file"):
+            avatar_stream = avatar.file
+            avatar_name = getattr(avatar, "filename", None)
+    except Exception:
+        # Fallback to JSON body
+        try:
+            body = await request.json()
+            full_name = body.get("full_name")
+            bio = body.get("bio")
+        except Exception:
+            pass
+
+    payload = ProfileUpdateRequest(full_name=full_name, bio=bio)
     return auth_service.update_profile(db, user_id, payload, avatar_stream=avatar_stream, avatar_filename=avatar_name)

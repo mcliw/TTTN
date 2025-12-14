@@ -21,13 +21,11 @@ class ChatIntent(Base):
 
     messages = relationship(
         "ChatMessage",
-        primaryjoin="ChatIntent.intent_id==ChatMessage.intent_id",
         back_populates="intent",
         lazy="selectin",
     )
     entities = relationship(
         "ChatEntity",
-        primaryjoin="ChatIntent.intent_id==ChatEntity.intent_id",
         back_populates="intent",
         lazy="selectin",
     )

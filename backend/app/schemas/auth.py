@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 
 
@@ -16,12 +16,12 @@ class LoginRequest(BaseModel):
     email: Optional[str]
     password: str = Field(..., min_length=6)
 
-    @field_validator("username", always=True)
+    @model_validator(mode="before")
     @classmethod
-    def username_or_email(cls, v, info):
-        if (v is None) and (info.data.get("email") is None):
+    def username_or_email(cls, values):
+        if (values.get("username") is None) and (values.get("email") is None):
             raise ValueError("username or email is required")
-        return v
+        return values
 
 
 class ProfileUpdateRequest(BaseModel):
