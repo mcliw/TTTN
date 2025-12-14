@@ -8,7 +8,7 @@ _PROJECT_ROOT = os.path.dirname(_PACKAGE_DIR)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi import Request
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 def create_app(lifespan=None) -> FastAPI:
     app = FastAPI(title="Chatbot TLU Backend", lifespan=lifespan)
 
+    # Create a main router that will hold all API versions, prefixed with /api
+    api_router = APIRouter(prefix="/api")
+
     # Register routers dynamically from app.api package
     try:
         import app.api as api_pkg
@@ -37,12 +40,15 @@ def create_app(lifespan=None) -> FastAPI:
                 mod = import_module(module_name)
                 router = getattr(mod, "router", None)
                 if router is not None:
-                    app.include_router(router)
+                    # Include each version's router into the main api_router
+                    api_router.include_router(router)
                     logger.debug("Included router from %s", module_name)
             except Exception:
                 logger.exception("Failed to include router %s", module_name)
     except Exception:
         logger.exception("Failed to scan app.api package for routers")
+
+    app.include_router(api_router)
 
     @app.get("/")
     def root():
@@ -79,6 +85,19 @@ async def lifespan(app: FastAPI):
     try:
         await bootstrap.init_all()
         logger.info("System bootstrap completed. Status: %s", bootstrap.status())
+        # Create initial data (admin user, roles) if needed
+        try:
+            from app.core.bootstrap import create_initial_data
+            from app.core.database import SessionLocal
+
+            if SessionLocal is not None:
+                db = SessionLocal()
+                try:
+                    create_initial_data(db)
+                finally:
+                    db.close()
+        except Exception:
+            logger.exception("Failed to create initial data during startup")
     except Exception:
         logger.exception("Bootstrap init failed")
     try:

@@ -280,3 +280,60 @@ class SystemBootstrap:
 
     def status(self) -> Dict[str, Any]:
         return {s.name: {"ready": s.ready, **s.details} for s in self.subsystems}
+
+
+def create_initial_data(db) -> None:
+    """Create default initial data such as an admin account.
+
+    This function is safe to call at startup; it will not raise on error
+    but will log exceptions to avoid crashing application startup.
+    """
+    try:
+        from sqlalchemy import select, or_
+        from sqlalchemy.orm import Session
+
+        # Import models and helper late to avoid import cycles
+        from app.models import UserAccount, UserRole, UserProfile
+        from app.core.security import get_password_hash
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        if not isinstance(db, Session):
+            logger.warning("create_initial_data called with non-Session object; skipping")
+            return
+
+        # Check for existing admin user by username or email
+        stmt = select(UserAccount).where(or_(UserAccount.username == "admin", UserAccount.email == "admin@example.com"))
+        existing = db.execute(stmt).scalar_one_or_none()
+        if existing is not None:
+            logger.info("Admin user already exists (id=%s)", getattr(existing, "user_id", None))
+            return
+
+        logger.info("Creating default ADMIN role and admin user")
+        try:
+            with db.begin():
+                # Ensure ADMIN role exists
+                role_stmt = select(UserRole).where(UserRole.role_name == "ADMIN")
+                role = db.execute(role_stmt).scalar_one_or_none()
+                if role is None:
+                    role = UserRole(role_name="ADMIN", description="System administrator")
+                    db.add(role)
+                    db.flush()
+
+                # Create admin user with hashed password
+                hashed = get_password_hash("123")
+                user = UserAccount(username="admin", password_hash=hashed, email="admin@example.com", role_id=getattr(role, "role_id", None), status="ACTIVE")
+                db.add(user)
+                db.flush()
+
+                # Add a basic profile so related queries find a profile
+                profile = UserProfile(user_id=user.user_id, full_name="Administrator")
+                db.add(profile)
+
+            logger.info("Default admin user created (id=%s)", user.user_id)
+        except Exception:
+            logger.exception("Failed to create default admin user; continuing without aborting startup")
+    except Exception:
+        # Catch anything unexpected to avoid bringing down the app
+        logging.getLogger(__name__).exception("create_initial_data encountered an error")
