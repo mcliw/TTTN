@@ -39,6 +39,15 @@ class DatabaseSubsystem(Subsystem):
             # Use the centralized database module which configures engine and sessions
             from app.core.database import engine, SessionLocal, create_tables, test_connection
 
+            # try import async DB as well
+            try:
+                from app.core import async_db
+                async_engine = async_db.engine
+                if async_engine is not None:
+                    self.details["async_db"] = True
+            except Exception:
+                self.details["async_db"] = False
+
             logger.info("Initializing database: %s", self.settings.database_url)
             self.engine = engine
             self.SessionLocal = SessionLocal
