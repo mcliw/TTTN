@@ -71,3 +71,35 @@ def test_connection(timeout_seconds: int = 5) -> bool:
     except SQLAlchemyError as exc:
         logger.exception("Database connectivity test failed: %s", exc)
         return False
+
+
+def get_db():
+    """FastAPI dependency that yields a DB `Session` and ensures it is closed."""
+    if SessionLocal is None:
+        raise RuntimeError("Database session factory is not configured")
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def begin_session():
+    """Context manager that yields a session already inside a transaction.
+
+    Usage:
+        with begin_session() as db:
+            db.add(...)
+    """
+    if SessionLocal is None:
+        raise RuntimeError("Database session factory is not configured")
+    db = SessionLocal()
+    try:
+        with db.begin():
+            yield db
+    finally:
+        db.close()

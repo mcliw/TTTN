@@ -12,6 +12,9 @@ from fastapi import FastAPI
 from fastapi import Request
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi import HTTPException as FastAPIHTTPException
+from starlette import status
 
 from app.core.config import settings, configure_logging
 from app.core.bootstrap import SystemBootstrap
@@ -48,7 +51,20 @@ def create_app(lifespan=None) -> FastAPI:
     @app.exception_handler(Exception)
     async def _handle_exceptions(request: Request, exc: Exception):
         logger.exception("Unhandled exception: %s", exc)
-        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"data": None, "message": "Internal Server Error", "error_code": "internal_error"},
+        )
+
+    @app.exception_handler(FastAPIHTTPException)
+    async def _handle_http_exceptions(request: Request, exc: FastAPIHTTPException):
+        logger.warning("HTTP exception: %s", exc.detail)
+        return JSONResponse(status_code=exc.status_code, content={"data": None, "message": exc.detail, "error_code": "http_error"})
+
+    @app.exception_handler(RequestValidationError)
+    async def _handle_validation_errors(request: Request, exc: RequestValidationError):
+        logger.warning("Validation error: %s", exc.errors())
+        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"data": None, "message": "Validation Error", "error_code": "validation_error", "errors": exc.errors()})
 
     return app
 

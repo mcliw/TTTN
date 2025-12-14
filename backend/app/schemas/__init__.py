@@ -1,3 +1,5 @@
 # Pydantic schemas package
 
-__all__ = []
+from .auth import *
+
+__all__ = ["RegisterRequest", "LoginRequest", "ProfileUpdateRequest", "AuthResponse", "UserProfileResponse", "ChatMessageCreate", "ChatMessagePayload", "PaginatedMessages"]
