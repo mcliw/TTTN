@@ -3,9 +3,11 @@ from importlib import import_module
 import pkgutil
 import logging
 
+from app.core.api_paths import APIPaths
+
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(prefix=APIPaths.PREFIX_V1)
 
 # Dynamically include endpoint modules under app.api.v1.endpoints
 try:

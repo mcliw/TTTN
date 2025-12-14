@@ -4,15 +4,16 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.api_paths import APIPaths
 from app.schemas.auth import RegisterRequest, LoginRequest, ProfileUpdateRequest
 from app.services.auth_service import AuthService
 from app.repositories.user_repo import UserRepository
 
-router = APIRouter(prefix="/v1/auth", tags=["v1-auth"])
+router = APIRouter(prefix=APIPaths.Auth.PREFIX, tags=["v1-auth"])
 auth_service = AuthService()
 
 
-@router.post("/register")
+@router.post(APIPaths.Auth.REGISTER)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     # Use repository to check existence
     repo = UserRepository(db)
@@ -22,12 +23,12 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     return auth_service.register(db, payload)
 
 
-@router.post("/login")
+@router.post(APIPaths.Auth.LOGIN)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     return auth_service.login(db, payload)
 
 
-@router.put("/profile/{user_id}")
+@router.put(APIPaths.Auth.PROFILE_BY_ID)
 def update_profile(user_id: int, full_name: str | None = Form(None), bio: str | None = Form(None), avatar: UploadFile | None = File(None), db: Session = Depends(get_db)):
     payload = ProfileUpdateRequest(full_name=full_name, bio=bio)
     avatar_stream = None
