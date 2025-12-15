@@ -51,6 +51,13 @@ class Settings:
     jwt_secret: str = os.getenv("JWT_SECRET", "change-me-in-prod")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+    refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    password_reset_token_expire_minutes: int = int(os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30"))
+    smtp_server: Optional[str] = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user: Optional[str] = os.getenv("SMTP_USER")
+    smtp_password: Optional[str] = os.getenv("SMTP_PASSWORD")
+    email_from: Optional[str] = os.getenv("EMAIL_FROM", "noreply@thanglong.edu.vn")
 
     # File uploads
     upload_dir: str = os.getenv("UPLOAD_DIR", "uploads")

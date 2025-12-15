@@ -20,15 +20,19 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-# Create only the tables needed for registration to avoid dialect-specific types (e.g., JSONB)
-from app.models import UserAccount, UserProfile, UserRole, SystemSetting
+# Create all tables needed for registration and login flow
+from app.models import (UserAccount, UserProfile, UserRole, SystemSetting, 
+                        SystemNotification, UserOAuthIdentity, ChatSession, 
+                        SystemFeedback, WorkflowConfig)
 UserAccount.__table__.create(bind=engine)
 UserProfile.__table__.create(bind=engine)
 UserRole.__table__.create(bind=engine)
 SystemSetting.__table__.create(bind=engine)
-# Add oauth identity table to satisfy relationship mapping
-from app.models import UserOAuthIdentity
 UserOAuthIdentity.__table__.create(bind=engine)
+SystemNotification.__table__.create(bind=engine)
+ChatSession.__table__.create(bind=engine)
+SystemFeedback.__table__.create(bind=engine)
+WorkflowConfig.__table__.create(bind=engine)
 
 
 def get_test_db():
@@ -50,6 +54,15 @@ def test_register_endpoint():
     print('body', resp.json())
     assert resp.status_code in (200, 201)
     assert resp.json().get("data") is not None
+    
+    # Test login with the newly created user
+    login_payload = {"username": "sinhvien_moi", "password": "Password123!"}
+    login_resp = client.post("/api/v1/auth/login", json=login_payload)
+    print('login status', login_resp.status_code)
+    print('login body', login_resp.json())
+    assert login_resp.status_code == 200
+    assert login_resp.json().get("data") is not None
+    assert login_resp.json()["data"].get("access_token") is not None
 
 
 if __name__ == '__main__':
